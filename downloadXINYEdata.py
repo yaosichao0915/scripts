@@ -132,10 +132,22 @@ try:
                 myoutput('%s----该日期没有数据'%cib[item])
             if result==0:
                 myoutput('%s----下载当日数据成功'%cib[item])
-        #对比 
-        time.sleep(3)
-        list = os.listdir(temp_dir)
-        for f in list:
+        #下载等待 
+        time.sleep(2)
+        seconds = 0
+        dl_wait = True
+        while dl_wait and seconds < 10: 
+            time.sleep(1)
+            dl_wait = False
+            f_list = os.listdir(temp_dir)
+            for fname in f_list:
+                if fname.endswith('.crdownload'):
+                    dl_wait = True
+            seconds += 1
+            if seconds > 9:
+                myoutput('\033[1;31;47m%s下载错误')
+        #对比
+        for f in f_list:
             dow=temp_dir+f
             dst=cib[item]+today_date+'/'+f
             dst_dif = cib[item]+today_date+'/'+'new_'+f
