@@ -8,6 +8,8 @@ import filecmp
 import logging
 import shutil
 import colorama
+import sys
+from datetime import datetime, timedelta
 from colorama import init,Fore,Back,Style
 init(autoreset=True)
 
@@ -63,7 +65,7 @@ def file_download(driver,section,date):
             driver.find_element_by_xpath("//tr[@data-row-key=%s]//div[@class='white']"%section).click() #体检
             time.sleep(1)
         try:
-            driver.find_element_by_xpath("//div[@style='cursor: pointer;']//div[contains(text(),'%s')]"%today_date).click()
+            driver.find_element_by_xpath("//div[@style='cursor: pointer;']//div[contains(text(),'%s')]"%date).click()
         except:
             driver.find_element_by_xpath("//div[@class='return']").click()
             time.sleep(1)
@@ -88,6 +90,15 @@ def file_download(driver,section,date):
     return 0
 
 try:    
+    if sys.argv[1] == 'M':    
+        gap = input("请输入假期有几天，普通双休日即输入2:\n")
+        gap = int(gap)+1
+    else:
+        gap=1
+    crawl_date=[]
+    for i in range(gap):
+        crawl_date.append(datetime.strftime(datetime.now() - timedelta(i),"%Y%m%d"))
+    myoutput('即将下载%s'%crawl_date)
     chrome_options = webdriver.ChromeOptions() 
     chrome_options.add_argument("user-data-dir=C:\\Users\\TGY_DataTransfer\\AppData\\Local\\Google\\Chrome\\User Data\\Default") #Path to your chrome profile
     prefs = {'download.default_directory' : 'D:\\cib\\temp',
@@ -113,13 +124,14 @@ try:
     for item in cib_code:
         
         #下载 
-        result = file_download(driver,cib_code[item],today_date) 
-        if result==1:
-            myoutput('\033[1;31;47m%s----下载错误'%cib[item])
-        if result==2:
-            myoutput('%s----该日期没有数据'%cib[item])
-        if result==0:
-            myoutput('%s----下载当日数据成功'%cib[item])
+        for date in crawl_date:
+            result = file_download(driver,cib_code[item],date) 
+            if result==1:
+                myoutput('\033[1;31;47m%s----下载错误'%cib[item])
+            if result==2:
+                myoutput('%s----该日期没有数据'%cib[item])
+            if result==0:
+                myoutput('%s----下载当日数据成功'%cib[item])
         #对比 
         time.sleep(3)
         list = os.listdir(temp_dir)
