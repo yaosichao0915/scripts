@@ -89,7 +89,12 @@ def file_download(driver,section,date):
         return 1
     return 0
 
-try:    
+try:
+    if os.path.exists(cib['xyk_tianjian']+today_date+'/'):
+        pass
+    else:
+        myoutput('\033[1;31;47m 请先创建日期文件夹')       
+        sys.exit(0)
     if sys.argv[1] == 'M':    
         gap = input("请输入假期有几天，普通双休日即输入2:\n")
         gap = int(gap)+1
@@ -125,7 +130,7 @@ try:
         
         #下载 
         for date in crawl_date:
-            result = file_download(driver,cib_code[item],date) 
+            result = file_download(driver,cib_code[item],date)  #根据每个类别和日期下载
             if result==1:
                 myoutput('\033[1;31;47m%s----下载错误'%cib[item])
             if result==2:
@@ -163,6 +168,10 @@ try:
                 myoutput('成功新增 %s'%dst)
     myoutput('---------下载数据任务结束---------')
     driver.quit()
-    input("------检查红字提醒，按任意键退出------")
+    print("------检查红字提醒，按任意键退出------")
+    sys.exit(0)
 except Exception as e:
+    shutil.rmtree(temp_dir)
+    os.mkdir(temp_dir)
+    myoutput('\033[1;31;47m存在错误，请联系管理员')
     myoutput(e)
