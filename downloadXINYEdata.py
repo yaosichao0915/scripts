@@ -76,18 +76,20 @@ def file_download(driver,section,date):
         driver.find_element_by_xpath("//li[@class='download']").click()
         time.sleep(1)
         driver.find_element_by_xpath("//button[@class='el-button el-button--default el-button--small el-button--primary ']").click()
-        time.sleep(2)
-        driver.find_element_by_xpath("//div[@class='return']").click()
-        time.sleep(1)
-        driver.find_element_by_xpath("//div[@class='return']").click()
-        time.sleep(1)
+        time.sleep(1.5)
+        driver.get('https://180.153.144.209/cftm/')
+        time.sleep(3)
+        try:
+            driver.switch_to.alert.accept()
+        except:
+            print('点击reload错误')
+        return 0
     except:
         driver.find_element_by_xpath("//div[@class='return']").click()
         time.sleep(1)
         driver.find_element_by_xpath("//div[@class='return']").click()
         time.sleep(1)
         return 1
-    return 0
 
 try:
     if os.path.exists(cib['xyk_tianjian']+today_date+'/'):
@@ -137,6 +139,7 @@ try:
                 myoutput('%s----该日期没有数据'%cib[item])
             if result==0:
                 myoutput('%s----下载当日数据成功'%cib[item])
+                go_to_page(driver)
         #下载等待 
         time.sleep(2)
         seconds = 0
