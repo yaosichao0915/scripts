@@ -65,6 +65,8 @@ def file_download(driver,section,date):
             driver.find_element_by_xpath("//tr[@data-row-key=%s]//div[@class='white']"%section).click() #体检
             time.sleep(1)
         try:
+            driver.find_element_by_xpath("//div[@class='ant-table-selection']//input[@type='checkbox']").click()
+            time.sleep(1)
             driver.find_element_by_xpath("//div[@style='cursor: pointer;']//div[contains(text(),'%s')]"%date).click()
         except:
             driver.find_element_by_xpath("//div[@class='return']").click()
@@ -74,7 +76,7 @@ def file_download(driver,section,date):
         driver.find_element_by_xpath("//div[@class='ant-table-selection']//input[@type='checkbox']").click()
         #driver.find_element_by_xpath("//tr[@class='ant-table-row ant-table-row-level-0'][1]//input[@type='checkbox']").click()
         driver.find_element_by_xpath("//li[@class='download']").click()
-        time.sleep(1)
+        time.sleep(1.5)
         driver.find_element_by_xpath("//button[@class='el-button el-button--default el-button--small el-button--primary ']").click()
         time.sleep(1.5)
         driver.get('https://180.153.144.209/cftm/')
@@ -82,13 +84,13 @@ def file_download(driver,section,date):
         try:
             driver.switch_to.alert.accept()
         except:
-            print('点击reload错误')
+            print('刷新失败')
         return 0
     except:
         driver.find_element_by_xpath("//div[@class='return']").click()
-        time.sleep(1)
+        time.sleep(2)
         driver.find_element_by_xpath("//div[@class='return']").click()
-        time.sleep(1)
+        time.sleep(2)
         return 1
 
 try:
@@ -141,7 +143,7 @@ try:
                 myoutput('%s----下载当日数据成功'%cib[item])
                 go_to_page(driver)
         #下载等待 
-        time.sleep(2)
+        time.sleep(3)
         seconds = 0
         dl_wait = True
         while dl_wait and seconds < 10: 
@@ -170,9 +172,9 @@ try:
                 shutil.move(dow,dst)
                 myoutput('成功新增 %s'%dst)
     myoutput('---------下载数据任务结束---------')
-    driver.quit()
-    print("------检查红字提醒，按任意键退出------")
-    sys.exit(0)
+    #driver.quit()
+    print("------检查红字提醒，检查结束后注意关闭该浏览器，按任意键退出------")
+    #sys.exit(0)
 except Exception as e:
     shutil.rmtree(temp_dir)
     os.mkdir(temp_dir)
