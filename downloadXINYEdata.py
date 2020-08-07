@@ -1,3 +1,4 @@
+#python32 -m "d:\cib\downloadXINYEdata.py N"
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -70,7 +71,7 @@ def file_download(driver,section,date):
             driver.find_element_by_xpath("//div[@style='cursor: pointer;']//div[contains(text(),'%s')]"%date).click()
         except:
             driver.find_element_by_xpath("//div[@class='return']").click()
-            time.sleep(1)
+            time.sleep(2)
             return 2
         time.sleep(1)
         driver.find_element_by_xpath("//div[@class='ant-table-selection']//input[@type='checkbox']").click()
@@ -93,7 +94,49 @@ def file_download(driver,section,date):
         time.sleep(2)
         return 1
 
+def deal_downloadfile():
+#下载等待
+    try:
+     #   time.sleep(1)
+        seconds = 0
+        dl_wait = True
+        while dl_wait and seconds < 10: 
+            time.sleep(1)
+            dl_wait = False
+            f_list = os.listdir(temp_dir)
+            for fname in f_list:
+                if fname.endswith('.crdownload'):
+                    dl_wait = True
+            seconds += 1
+            if seconds > 9:
+                myoutput('\033[1;31;47m%s下载超时错误'%cib[item])
+        #对比
+        for f in f_list:
+            dow=temp_dir+f
+            dst=cib[item]+today_date+'/'+f
+            dst_dif = cib[item]+today_date+'/'+'new_'+f
+            try:
+                if filecmp.cmp(dow,dst):
+                    os.remove(dow)
+                else:
+                    shutil.move(dow,dst_dif)
+                   # myoutput('%s内容不一致，请人工审查'%dst)
+                    myoutput('\033[1;31;47m%s内容不一致，请人工审查'%dst)
+            except:            
+                shutil.move(dow,dst)
+                myoutput('成功新增 %s'%dst)    
+        return 0
+    except Exception as e:
+        myoutput(e)
+        return 1
+            
 try:
+    try:
+        shutil.rmtree(temp_dir)
+        os.mkdir(temp_dir)
+    except:
+        os.mkdir(temp_dir)
+        
     if os.path.exists(cib['xyk_tianjian']+today_date+'/'):
         pass
     else:
@@ -119,6 +162,7 @@ try:
     driver.get('https://180.153.144.209/cftm/')
     time.sleep(10)
 
+    #等待验证码输入，检测是否已已经跳转
     while(1):
         try:
             driver.find_element_by_xpath("//input[@type='password']")
@@ -136,47 +180,22 @@ try:
         for date in crawl_date:
             result = file_download(driver,cib_code[item],date)  #根据每个类别和日期下载
             if result==1:
-                myoutput('\033[1;31;47m%s----下载错误'%cib[item])
+                myoutput('\033[1;31;47m%s----下载错误，请手动下载或再次运行'%cib[item])
             if result==2:
                 myoutput('%s----该日期没有数据'%cib[item])
             if result==0:
-                myoutput('%s----下载当日数据成功'%cib[item])
                 go_to_page(driver)
-        #下载等待 
-        time.sleep(3)
-        seconds = 0
-        dl_wait = True
-        while dl_wait and seconds < 10: 
-            time.sleep(1)
-            dl_wait = False
-            f_list = os.listdir(temp_dir)
-            for fname in f_list:
-                if fname.endswith('.crdownload'):
-                    dl_wait = True
-            seconds += 1
-            if seconds > 9:
-                myoutput('\033[1;31;47m%s下载错误')
-        #对比
-        for f in f_list:
-            dow=temp_dir+f
-            dst=cib[item]+today_date+'/'+f
-            dst_dif = cib[item]+today_date+'/'+'new_'+f
-            try:
-                if filecmp.cmp(dow,dst):
-                    os.remove(dow)
+                if deal_downloadfile()==0:
+                    myoutput('%s----下载当日数据成功'%cib[item])
                 else:
-                    shutil.move(dow,dst_dif)
-                   # myoutput('%s内容不一致，请人工审查'%dst)
-                    myoutput('\033[1;31;47m%s内容不一致，请人工审查'%dst)
-            except:            
-                shutil.move(dow,dst)
-                myoutput('成功新增 %s'%dst)
+                    myoutput('\033[1;31;47m%s----下载文件处理错误，请手动下载或再次运行'%cib[item])
+                        
     myoutput('---------下载数据任务结束---------')
     #driver.quit()
-    print("------检查红字提醒，检查结束后注意关闭该浏览器，按任意键退出------")
+    print("------检查红字提醒，检查结束后注意关闭该浏览器，私行请用另一浏览器，按任意键退出------")
     #sys.exit(0)
 except Exception as e:
     shutil.rmtree(temp_dir)
     os.mkdir(temp_dir)
-    myoutput('\033[1;31;47m存在错误，请联系管理员')
+    myoutput('\033[1;31;47m存在未知错误，请联系管理员')
     myoutput(e)
