@@ -15,6 +15,8 @@ from colorama import init,Fore,Back,Style
 init(autoreset=True)
 
 temp_dir = 'D:/cib/temp/'
+screen_shot_dir = 'D:/cib/screenshot/'
+
 cib_code={
 "xyk_tianjian":"2020105919",
 "xyk_jieya":"2020105917",
@@ -44,7 +46,29 @@ def myoutput(msg):
     logger = logging.getLogger("downloaddata") 
     logger.info(msg)
     print(msg)
-    
+
+def clean_screen_shot():
+    try:
+        now_time = time.time()
+        duration = 7
+        for file in os.listdir(screen_shot_dir):
+            m_time = os.stat(screen_shot_dir+file).st_mtime
+            if now_time - m_time > 3600*24*duration:
+                os.remove(screen_shot_dir+file)
+    except Exception as e:
+        myoutput(e)
+
+def capture_screen_shot(driver,item):
+    try:
+        
+        file_name = time.strftime("%Y%m%d-%H-%M-%S", time.localtime(time.time()))
+        file_dst = screen_shot_dir+item+file_name+'.png'
+ 
+        driver.save_screenshot(file_dst)
+    except Exception as e:
+        myoutput(e)
+        myoutput('注意！截图错误！')
+        
 def go_to_page(driver):
     page = ['2019100000','2019100001','2019100016','2019100042','2019100150'] #CIB 总行 普惠金融事业部 权益  qyxt
     for page_id in page:
@@ -56,17 +80,19 @@ def go_to_page(driver):
             driver.find_element_by_xpath("//tr[@data-row-key=%s]//div[@class='white']"%page_id).click()
             time.sleep(1)
 
-def file_download(driver,section,date):
+def file_download(driver,item,date):
     try:
         try:
             element = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//tr[@data-row-key=%s]//div[@class='white']"%section))
+            EC.presence_of_element_located((By.XPATH, "//tr[@data-row-key=%s]//div[@class='white']"%cib_code[item]))
             )           
         finally:
-            driver.find_element_by_xpath("//tr[@data-row-key=%s]//div[@class='white']"%section).click() #体检
+            driver.find_element_by_xpath("//tr[@data-row-key=%s]//div[@class='white']"%cib_code[item]).click() #体检
             time.sleep(1)
         try:
+            
             driver.find_element_by_xpath("//div[@class='ant-table-selection']//input[@type='checkbox']").click()
+            capture_screen_shot(driver,item) #截图
             time.sleep(1)
             driver.find_element_by_xpath("//div[@style='cursor: pointer;']//div[contains(text(),'%s')]"%date).click()
         except:
@@ -74,12 +100,14 @@ def file_download(driver,section,date):
             time.sleep(2)
             return 2
         time.sleep(1)
+        
         driver.find_element_by_xpath("//div[@class='ant-table-selection']//input[@type='checkbox']").click()
+        capture_screen_shot(driver,item) #截图
         #driver.find_element_by_xpath("//tr[@class='ant-table-row ant-table-row-level-0'][1]//input[@type='checkbox']").click()
         driver.find_element_by_xpath("//li[@class='download']").click()
         time.sleep(1.5)
         driver.find_element_by_xpath("//button[@class='el-button el-button--default el-button--small el-button--primary ']").click()
-        time.sleep(1.5)
+        time.sleep(2.5)
         driver.get('https://180.153.144.209/cftm/')
         time.sleep(3)
         try:
@@ -94,7 +122,7 @@ def file_download(driver,section,date):
         time.sleep(2)
         return 1
 
-def deal_downloadfile():
+def deal_downloadfile(item):
 #下载等待
     try:
      #   time.sleep(1)
@@ -136,7 +164,10 @@ try:
         os.mkdir(temp_dir)
     except:
         os.mkdir(temp_dir)
-        
+    try:
+        os.mkdir(screen_shot_dir)
+    except:
+        clean_screen_shot()   
     if os.path.exists(cib['xyk_tianjian']+today_date+'/'):
         pass
     else:
@@ -152,7 +183,8 @@ try:
         crawl_date.append(datetime.strftime(datetime.now() - timedelta(i),"%Y%m%d"))
     myoutput('即将下载%s'%crawl_date)
     chrome_options = webdriver.ChromeOptions() 
-    chrome_options.add_argument("user-data-dir=C:\\Users\\TGY_DataTransfer\\AppData\\Local\\Google\\Chrome\\User Data\\Default") #Path to your chrome profile
+    chrome_options.add_argument("user-data-dir=C:\\Users\\TGY_DataTransfer\\AppData\\Local\\Google\\Chrome\\User Data\\Default") 
+    chrome_options.add_argument('--start-maximized')
     prefs = {'download.default_directory' : 'D:\\cib\\temp',
             "download.prompt_for_download": False,
             "download.directory_upgrade": True,
@@ -178,14 +210,14 @@ try:
         
         #下载 
         for date in crawl_date:
-            result = file_download(driver,cib_code[item],date)  #根据每个类别和日期下载
+            result = file_download(driver,item,date)  #根据每个类别和日期下载
             if result==1:
                 myoutput('\033[1;31;47m%s----下载错误，请手动下载或再次运行'%cib[item])
             if result==2:
                 myoutput('%s----该日期没有数据'%cib[item])
             if result==0:
                 go_to_page(driver)
-                if deal_downloadfile()==0:
+                if deal_downloadfile(item)==0:
                     myoutput('%s----下载当日数据成功'%cib[item])
                 else:
                     myoutput('\033[1;31;47m%s----下载文件处理错误，请手动下载或再次运行'%cib[item])
